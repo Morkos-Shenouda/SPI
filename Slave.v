@@ -30,56 +30,59 @@ module Slave (MOSI, MISO, SS_n, rx_data, rx_valid, tx_data, tx_valid, clk, rst_n
             add_recieved <= 0;
             s2p_count <= 0;
             p2s_count <= 0;
+            rx_valid <= 0;
+            rx_data <= 0;
+            MISO <= 0;
         end
         else
             cs <= ns;
     end
 
     // next state logic
-    always @(posedge clk) begin
+    always @(cs, SS_n, MOSI) begin
         case (cs) 
 
             IDLE:
                 if (!SS_n)
-                    ns <= CHK_CMD;
+                    ns = CHK_CMD;
                 else
-                    ns <= IDLE;
+                    ns = IDLE;
             
             CHK_CMD:
                 if (SS_n)
-                    ns <= IDLE;
+                    ns = IDLE;
                 else if (!SS_n && !MOSI) begin
-                    ns <= WRITE;
-                    s2p_count <= 10;
+                    ns = WRITE;
+                    s2p_count = 10;
                 end
                 else if (!SS_n && MOSI && !add_recieved) begin
-                    ns <= READ_ADD;
-                    s2p_count <= 10;
-                    add_recieved <= 1;
+                    ns = READ_ADD;
+                    s2p_count = 10;
+                    add_recieved = 1;
                 end
                 else if (!SS_n && MOSI && add_recieved) begin
-                    ns <= READ_DATA;
-                    s2p_count <= 10;
-                    p2s_count <= 9;
+                    ns = READ_DATA;
+                    s2p_count = 10;
+                    p2s_count = 8;
                 end
 
             WRITE:
                 if (SS_n)
-                    ns <= IDLE;
+                    ns = IDLE;
                 else if (!SS_n && s2p_count)
-                    ns <= WRITE;
+                    ns = WRITE;
 
             READ_ADD:
                 if (SS_n)
-                    ns <= IDLE;
+                    ns = IDLE;
                 else if (!SS_n && s2p_count) 
-                    ns <= READ_ADD;
+                    ns = READ_ADD;
             
             READ_DATA:
                 if (SS_n)
-                    ns <= IDLE;
+                    ns = IDLE;
                 else if (!SS_n && (s2p_count || p2s_count))
-                    ns <= READ_DATA;
+                    ns = READ_DATA;
 
         endcase
     end
@@ -89,33 +92,39 @@ module Slave (MOSI, MISO, SS_n, rx_data, rx_valid, tx_data, tx_valid, clk, rst_n
         case (cs)
 
             IDLE:
-                rx_valid <= 0;
+                rx_valid = 0;
 
-            WRITE:
+            WRITE: begin
                 if (s2p_count) begin
-                    s2p_count <= s2p_count - 1;
-                    rx_data <= (rx_data << 1) + MOSI;
+                    rx_data = (rx_data << 1) + MOSI;
                 end
-                else
+                s2p_count = s2p_count - 1;
+                if (!s2p_count)
                     rx_valid <= 1;
+            end
 
-            READ_ADD:
+            READ_ADD: begin
+                s2p_count = s2p_count - 1;
                 if (s2p_count) begin
-                    s2p_count <= s2p_count - 1;
-                    rx_data <= (rx_data << 1) + MOSI;
+                    rx_data = (rx_data << 1) + MOSI;
                 end
-                else
-                    rx_valid <= 1;
+                else 
+                    rx_valid = 1;
+            end
 
-            READ_DATA:
+            READ_DATA: begin
+                s2p_count = s2p_count - 1;
                 if (s2p_count) begin
-                    s2p_count <= s2p_count - 1;
-                    rx_data <= (rx_data << 1) + MOSI;
+                    rx_data = (rx_data << 1) + MOSI;
                 end
-                else if (tx_valid && p2s_count) begin
-                    p2s_count <= p2s_count - 1;
-                    MISO <= tx_data[p2s_count - 1];
+
+                if (tx_valid && p2s_count) begin
+                    MISO = tx_data[p2s_count - 1];
+                    p2s_count = p2s_count - 1;
+                    if (!p2s_count)
+                        add_recieved = 0;
                 end
+            end
 
         endcase
     end

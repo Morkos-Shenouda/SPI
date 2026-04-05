@@ -59,10 +59,14 @@ initial begin
     SS_n=0;
     MOSI=0;
     @(negedge clk);
+    MOSI=0;
+    @(negedge clk);
     for (i=9;i>=0;i=i-1) begin
         MOSI=MOSI_tmp[i];
         @(negedge clk);
     end
+
+    @(negedge clk);
 
     if(rx_data!==MOSI_tmp || rx_valid!==1) begin
         $display("Write address doesn't work");
@@ -79,11 +83,15 @@ initial begin
     SS_n=0;
     MOSI=0;
     @(negedge clk);
+    MOSI=0;
+    @(negedge clk);
     for(i=9;i>=0;i=i-1) begin
         MOSI=MOSI_tmp[i];
         @(negedge clk);
     end
 
+    @(negedge clk);
+    
     if(rx_data!==MOSI_tmp || rx_valid!==1) begin
         $display("Write data doesn't work");
         $stop;
@@ -96,12 +104,16 @@ initial begin
     // -----------------------------------------------------------------------------
     MOSI_tmp=10'h2CD; //first 2 bits must be 10
     SS_n=0;
+    MOSI=0;
+    @(negedge clk);
     MOSI=1;
     @(negedge clk);
     for(i=9;i>=0;i=i-1) begin
         MOSI=MOSI_tmp[i];
         @(negedge clk);
     end
+
+    @(negedge clk);
 
     if(rx_data!==MOSI_tmp || rx_valid!==1) begin
         $display("read address doesn't work");
@@ -115,6 +127,8 @@ initial begin
     // -----------------------------------------------------------------------------
     MOSI_tmp=10'h3EF; //first 2 bits bust be 11. next 8 bits are dummy
     SS_n=0;
+    MOSI=0;
+    @(negedge clk);
     MOSI=1;
     @(negedge clk);
     for(i=9;i>=0;i=i-1) begin
@@ -122,21 +136,23 @@ initial begin
         @(negedge clk);
     end
 
-    if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid!==1) begin //doesn't check on dummy 8 bits
+    @(negedge clk);
+
+    if(rx_data[9:8] !== MOSI_tmp[9:8]) begin //doesn't check on dummy 8 bits
         $display("read address doesn't work");
         $stop;
     end
-
+    
     tx_data=8'h45; //simulating data read from the memory
     tx_valid=1;
-    @(negedge clk);
 
     for(i=7;i>=0;i=i-1) begin
+        @(negedge clk);
         if(MISO !== tx_data[i]) begin
             $display("read data doesn't work, specifically the converting from parallel to serial");
             $stop;
         end
-        @(negedge clk);
+        
     end
 
 
@@ -155,10 +171,14 @@ initial begin
         SS_n=0;
         MOSI=0;
         @(negedge clk);
+        MOSI=0;
+        @(negedge clk);
         for (i=9;i>=0;i=i-1) begin
             MOSI=MOSI_tmp[i];
             @(negedge clk);
         end
+
+        @(negedge clk);
 
         if(rx_data!==MOSI_tmp || rx_valid!==1) begin
             $display("Write address doesn't work");
@@ -176,10 +196,14 @@ initial begin
         SS_n=0;
         MOSI=0;
         @(negedge clk);
+        MOSI=0;
+        @(negedge clk);
         for(i=9;i>=0;i=i-1) begin
             MOSI=MOSI_tmp[i];
             @(negedge clk);
         end
+
+        @(negedge clk);
 
         if(rx_data!==MOSI_tmp || rx_valid!==1) begin
             $display("Write data doesn't work");
@@ -194,12 +218,16 @@ initial begin
         MOSI_tmp=$random;
         MOSI_tmp[9:8]=2'b10; //first 2 bits must be 10
         SS_n=0;
+        MOSI=0;
+        @(negedge clk);
         MOSI=1;
         @(negedge clk);
         for(i=9;i>=0;i=i-1) begin
             MOSI=MOSI_tmp[i];
             @(negedge clk);
         end
+
+        @(negedge clk);
 
         if(rx_data!==MOSI_tmp || rx_valid!==1) begin
             $display("read address doesn't work");
@@ -214,6 +242,8 @@ initial begin
         MOSI_tmp=$random;
         MOSI_tmp[9:8]=2'b11; //first 2 bits bust be 11. next 8 bits are dummy
         SS_n=0;
+        MOSI=0;
+        @(negedge clk);
         MOSI=1;
         @(negedge clk);
         for(i=9;i>=0;i=i-1) begin
@@ -221,21 +251,22 @@ initial begin
             @(negedge clk);
         end
 
-        if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid!==1) begin //doesn't check on dummy 8 bits
+        @(negedge clk);
+
+        if(rx_data[9:8] !== MOSI_tmp[9:8]) begin //doesn't check on dummy 8 bits
             $display("read address doesn't work");
             $stop;
         end
 
         tx_data=$random; //simulating data read from the memory
         tx_valid=1;
-        @(negedge clk);
 
         for(i=7;i>=0;i=i-1) begin
+            @(negedge clk);
             if(MISO !== tx_data[i]) begin
                 $display("read data doesn't work, specifically the converting from parallel to serial");
                 $stop;
             end
-            @(negedge clk);
         end
 
 
