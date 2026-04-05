@@ -138,7 +138,7 @@ initial begin
 
     @(negedge clk);
 
-    if(rx_data[9:8] !== MOSI_tmp[9:8]) begin //doesn't check on dummy 8 bits
+    if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid != 1) begin //doesn't check on dummy 8 bits
         $display("read address doesn't work");
         $stop;
     end
@@ -253,7 +253,7 @@ initial begin
 
         @(negedge clk);
 
-        if(rx_data[9:8] !== MOSI_tmp[9:8]) begin //doesn't check on dummy 8 bits
+        if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid != 1) begin //doesn't check on dummy 8 bits
             $display("read address doesn't work");
             $stop;
         end

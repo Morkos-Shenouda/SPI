@@ -117,6 +117,8 @@ module Slave (MOSI, MISO, SS_n, rx_data, rx_valid, tx_data, tx_valid, clk, rst_n
                 if (s2p_count) begin
                     rx_data = (rx_data << 1) + MOSI;
                 end
+                else 
+                    rx_valid = 1;
 
                 if (tx_valid && p2s_count) begin
                     MISO = tx_data[p2s_count - 1];
