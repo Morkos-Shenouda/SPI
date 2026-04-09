@@ -1,133 +1,119 @@
-module Slave (MOSI, MISO, SS_n, rx_data, rx_valid, tx_data, tx_valid, clk, rst_n);
+module Slave (
+    input clk,
+    input rst_n,
 
-    parameter IDLE = 3'b000;
-    parameter CHK_CMD = 3'b001;
-    parameter WRITE = 3'b010;
-    parameter READ_ADD = 3'b011;
-    parameter READ_DATA = 3'b100;
+    input MOSI,
+    input SS_n,
+    input [7:0] tx_data,
+    input tx_valid,
 
-    input MOSI, SS_n, clk, rst_n, tx_valid;
-    input [7:0] tx_data;
+    output reg MISO,
+    output reg [9:0] rx_data,
+    output reg rx_valid
+);
 
-    output reg rx_valid, MISO;
-    output reg [9:0] rx_data;
+localparam IDLE=0;
+localparam CHK_CMD=1;
+localparam WRITE=2;
+localparam READ_ADD=3;
+localparam READ_DATA=4;
 
-    // internal signal to know if read address is recieved or not
-    reg add_recieved;
+reg [2:0] cs,ns;
+reg [3:0] counter1;
+reg [3:0] counter2;
+reg has_read_address;
 
-    // internal counters for conversion
-    reg [3:0] s2p_count;
-    reg [3:0] p2s_count;
-
-    // states
-    (* fsm_encoding = "sequential" *)
-    reg[2:0] cs,ns;
-
-    // reset logic
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            cs <= IDLE;
-            add_recieved <= 0;
-            s2p_count <= 0;
-            p2s_count <= 0;
-            rx_valid <= 0;
-            rx_data <= 0;
-            MISO <= 0;
-        end
-        else
-            cs <= ns;
+always @(posedge clk or negedge rst_n) begin
+    if(!rst_n) begin
+        cs<=0;
+        has_read_address<=0;
     end
+    else begin 
+        cs<=ns;
+        if (cs==READ_ADD) has_read_address<=1;
+        else if(cs==READ_DATA) has_read_address<=0;
+    end
+end
 
-    // next state logic
-    always @(cs, SS_n, MOSI) begin
-        case (cs) 
+always @(*) begin
+    case (cs)
+        IDLE:
+            if(SS_n==1) ns=IDLE;
+            else ns=CHK_CMD;
+        
+        CHK_CMD:
+            if(SS_n==1) ns=IDLE;
+            else if(MOSI==0) ns=WRITE;
+            else if(!has_read_address) ns=READ_ADD;
+            else ns=READ_DATA;
+        
+        WRITE:
+            if(SS_n==1) ns=IDLE;
+            else ns=WRITE;
+        
+        READ_ADD: begin
+            if(SS_n==1) ns=IDLE;
+            else ns=READ_ADD;
+        end
 
-            IDLE:
-                if (!SS_n)
-                    ns = CHK_CMD;
-                else
-                    ns = IDLE;
-            
-            CHK_CMD:
-                if (SS_n)
-                    ns = IDLE;
-                else if (!SS_n && !MOSI) begin
-                    ns = WRITE;
-                    s2p_count = 10;
-                end
-                else if (!SS_n && MOSI && !add_recieved) begin
-                    ns = READ_ADD;
-                    s2p_count = 10;
-                    add_recieved = 1;
-                end
-                else if (!SS_n && MOSI && add_recieved) begin
-                    ns = READ_DATA;
-                    s2p_count = 10;
-                    p2s_count = 8;
-                end
+        READ_DATA: begin
+            if(SS_n==1) ns=IDLE;
+            else ns=READ_DATA;
+        end
 
-            WRITE:
-                if (SS_n)
-                    ns = IDLE;
-                else if (!SS_n && s2p_count)
-                    ns = WRITE;
+        default:
+            ns=IDLE;
+    endcase
+end
+
+always @(posedge clk or negedge rst_n) begin
+    if(!rst_n) begin
+        MISO<=0;
+        rx_data<=0;
+        rx_valid<=0;
+        counter1<=0;
+        counter2<=0;
+    end else begin
+        case (cs)
+            WRITE: 
+                if(counter1<10) begin
+                    rx_data[9-counter1]<=MOSI;
+                    counter1<=counter1+1;
+                end 
+                else rx_valid<=1;
 
             READ_ADD:
-                if (SS_n)
-                    ns = IDLE;
-                else if (!SS_n && s2p_count) 
-                    ns = READ_ADD;
-            
+                if(counter1<10) begin
+                    rx_data[9-counter1]<=MOSI;
+                    counter1<=counter1+1;
+                end
+                else rx_valid<=1;
+
             READ_DATA:
-                if (SS_n)
-                    ns = IDLE;
-                else if (!SS_n && (s2p_count || p2s_count))
-                    ns = READ_DATA;
-
-        endcase
-    end
-
-    // output logic
-    always @(posedge clk) begin
-        case (cs)
-
-            IDLE:
-                rx_valid = 0;
-
-            WRITE: begin
-                if (s2p_count) begin
-                    rx_data = (rx_data << 1) + MOSI;
+                if(counter1<10) begin
+                    rx_data[9-counter1]<=MOSI;
+                    counter1<=counter1+1;
                 end
-                s2p_count = s2p_count - 1;
-                if (!s2p_count)
-                    rx_valid <= 1;
-            end
-
-            READ_ADD: begin
-                s2p_count = s2p_count - 1;
-                if (s2p_count) begin
-                    rx_data = (rx_data << 1) + MOSI;
+                else begin
+                    rx_valid<=1;
+                    if(tx_valid) begin
+                        if(counter2<8) begin
+                            MISO<=tx_data[7-counter2];
+                            counter2<=counter2+1;
+                        end
+                    end
                 end
-                else 
-                    rx_valid = 1;
-            end
-
-            READ_DATA: begin
-                s2p_count = s2p_count - 1;
-                if (s2p_count) begin
-                    rx_data = (rx_data << 1) + MOSI;
-                end
-                else 
-                    rx_valid = 1;
-
-                if (tx_valid && p2s_count) begin
-                    MISO = tx_data[p2s_count - 1];
-                    p2s_count = p2s_count - 1;
-                    if (!p2s_count)
-                        add_recieved = 0;
-                end
+            
+            default: begin
+                MISO<=0;
+                rx_valid<=0;
+                rx_data<=0;
+                counter1<=0;
+                counter2<=0;
             end
 
         endcase
     end
+end
+    
 endmodule
