@@ -143,7 +143,7 @@ initial begin
         $stop;
     end
     
-    tx_data=45; //simulating data read from the memory
+    tx_data=8'h45; //simulating data read from the memory
     tx_valid=1;
 
     for(i=7;i>=0;i=i-1) begin
