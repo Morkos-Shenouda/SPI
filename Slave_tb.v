@@ -55,7 +55,7 @@ initial begin
     // testing write address
     // testing rx_data is getting MOSI after 11 clock cycles
     // -----------------------------------------------------------------------------
-    MOSI_tmp=10'h010; //first 2 bits must be 00 
+    MOSI_tmp=10'h0FF; //first 2 bits must be 00 
     SS_n=0;
     MOSI=0;
     @(negedge clk);
@@ -138,12 +138,12 @@ initial begin
 
     @(negedge clk);
 
-    if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid != 1) begin //doesn't check on dummy 8 bits
+    if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid !== 1) begin //doesn't check on dummy 8 bits
         $display("read address doesn't work");
         $stop;
     end
     
-    tx_data=8'h45; //simulating data read from the memory
+    tx_data=45; //simulating data read from the memory
     tx_valid=1;
 
     for(i=7;i>=0;i=i-1) begin
@@ -160,8 +160,10 @@ initial begin
     tx_valid=0;
     @(negedge clk);
 
-
-    repeat(50) begin
+    // =============================================================================
+    //                              testing writing, reading in sequence many times
+    // =============================================================================
+    repeat(500) begin
         // -----------------------------------------------------------------------------
         // testing write address
         // testing rx_data is getting MOSI after 11 clock cycles
@@ -253,7 +255,7 @@ initial begin
 
         @(negedge clk);
 
-        if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid != 1) begin //doesn't check on dummy 8 bits
+        if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid !== 1) begin //doesn't check on dummy 8 bits
             $display("read address doesn't work");
             $stop;
         end
@@ -277,8 +279,127 @@ initial begin
     end
 
 
+    // =============================================================================
+    //                              testing writing many times
+    // =============================================================================
+    repeat(500) begin
+        // -----------------------------------------------------------------------------
+        // testing write address
+        // testing rx_data is getting MOSI after 11 clock cycles
+        // -----------------------------------------------------------------------------
+        MOSI_tmp=$random;
+        MOSI_tmp[9:8]=2'b00; //first 2 bits must be 00 
+        SS_n=0;
+        MOSI=0;
+        @(negedge clk);
+        MOSI=0;
+        @(negedge clk);
+        for (i=9;i>=0;i=i-1) begin
+            MOSI=MOSI_tmp[i];
+            @(negedge clk);
+        end
+
+        @(negedge clk);
+
+        if(rx_data!==MOSI_tmp || rx_valid!==1) begin
+            $display("Write address doesn't work");
+            $stop;
+        end
+        SS_n=1;
+        @(negedge clk);
 
 
+        // -----------------------------------------------------------------------------
+        // testing write data
+        // -----------------------------------------------------------------------------
+        MOSI_tmp=$random;
+        MOSI_tmp[9:8]=2'b01; //first 2 bits must be 01
+        SS_n=0;
+        MOSI=0;
+        @(negedge clk);
+        MOSI=0;
+        @(negedge clk);
+        for(i=9;i>=0;i=i-1) begin
+            MOSI=MOSI_tmp[i];
+            @(negedge clk);
+        end
+
+        @(negedge clk);
+
+        if(rx_data!==MOSI_tmp || rx_valid!==1) begin
+            $display("Write data doesn't work");
+            $stop;
+        end
+        SS_n=1;
+        @(negedge clk);
+    end
+
+    // =============================================================================
+    //                              testing reading only many times
+    // =============================================================================
+    repeat(500) begin
+        // -----------------------------------------------------------------------------
+        // testing read address
+        // -----------------------------------------------------------------------------
+        MOSI_tmp=$random;
+        MOSI_tmp[9:8]=2'b10; //first 2 bits must be 10
+        SS_n=0;
+        MOSI=0;
+        @(negedge clk);
+        MOSI=1;
+        @(negedge clk);
+        for(i=9;i>=0;i=i-1) begin
+            MOSI=MOSI_tmp[i];
+            @(negedge clk);
+        end
+
+        @(negedge clk);
+
+        if(rx_data!==MOSI_tmp || rx_valid!==1) begin
+            $display("read address doesn't work");
+            $stop;
+        end
+        SS_n=1;
+        @(negedge clk);
+
+        // -----------------------------------------------------------------------------
+        // testing read data
+        // -----------------------------------------------------------------------------
+        MOSI_tmp=$random;
+        MOSI_tmp[9:8]=2'b11; //first 2 bits bust be 11. next 8 bits are dummy
+        SS_n=0;
+        MOSI=0;
+        @(negedge clk);
+        MOSI=1;
+        @(negedge clk);
+        for(i=9;i>=0;i=i-1) begin
+            MOSI=MOSI_tmp[i];
+            @(negedge clk);
+        end
+
+        @(negedge clk);
+
+        if(rx_data[9:8] !== MOSI_tmp[9:8] || rx_valid !== 1) begin //doesn't check on dummy 8 bits
+            $display("read address doesn't work");
+            $stop;
+        end
+
+        tx_data=$random; //simulating data read from the memory
+        tx_valid=1;
+
+        for(i=7;i>=0;i=i-1) begin
+            @(negedge clk);
+            if(MISO !== tx_data[i]) begin
+                $display("read data doesn't work, specifically the converting from parallel to serial");
+                $stop;
+            end
+        end
+
+
+        SS_n=1;
+        tx_valid=0;
+        @(negedge clk);
+    end
     $display("Tests passed");
     $stop;
 
@@ -286,8 +407,8 @@ end
 
 
 
-initial begin
-    $monitor("MOSI=%h, SS_n=%b, tx_data=%h, tx_valid=%b, MISO=%b, rx_data=%h, rx_valid=%b",
-        MOSI,SS_n,tx_data,tx_valid,MISO,rx_data,rx_valid);
-end
+// initial begin
+//     $monitor("MOSI=%h, SS_n=%b, tx_data=%h, tx_valid=%b, MISO=%b, rx_data=%h, rx_valid=%b",
+//         MOSI,SS_n,tx_data,tx_valid,MISO,rx_data,rx_valid);
+// end
 endmodule
