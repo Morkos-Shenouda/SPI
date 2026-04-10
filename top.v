@@ -1,16 +1,22 @@
-module top (
+module top #(
+    parameter MEM_WIDTH=8,
+    parameter MEM_DEPTH=256
+)(
     input clk,
     input rst_n,
     input SS_n,
     input MOSI,
     output MISO
 );
-wire [9:0] rx_data;
+wire [MEM_WIDTH+1:0] rx_data;
 wire rx_valid;
-wire [7:0] tx_data;
+wire [MEM_WIDTH-1:0] tx_data;
 wire tx_valid;
 
-Slave s1(
+Slave #(
+    .width(MEM_WIDTH)
+)
+s1(
     .clk(clk),
     .rst_n(rst_n),
     .MOSI(MOSI),
@@ -22,13 +28,17 @@ Slave s1(
     .tx_valid(tx_valid)
 );
 
-ram r1(
+ram #(
+    .MEM_WIDTH(MEM_WIDTH),
+    .MEM_DEPTH(MEM_DEPTH)
+)
+r1(
     .din(rx_data),
     .clk(clk),
     .rst_n(rst_n),
     .rx_valid(rx_valid),
     .dout(tx_data),
     .tx_valid(tx_valid)
-)
+);
     
 endmodule
