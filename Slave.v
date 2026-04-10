@@ -1,14 +1,16 @@
-module Slave (
+module Slave #(
+    parameter width=8
+) (
     input clk,
     input rst_n,
 
     input MOSI,
     input SS_n,
-    input [7:0] tx_data,
+    input [width-1:0] tx_data,
     input tx_valid,
 
     output reg MISO,
-    output reg [9:0] rx_data,
+    output reg [width+1:0] rx_data,
     output reg rx_valid
 );
 
@@ -19,8 +21,8 @@ localparam READ_ADD=3;
 localparam READ_DATA=4;
 
 reg [2:0] cs,ns;
-reg [3:0] counter1;
-reg [3:0] counter2;
+integer counter1;
+integer counter2;
 reg has_read_address;
 
 always @(posedge clk or negedge rst_n) begin
@@ -76,29 +78,29 @@ always @(posedge clk or negedge rst_n) begin
     end else begin
         case (cs)
             WRITE: 
-                if(counter1<10) begin
-                    rx_data[9-counter1]<=MOSI;
+                if(counter1<width+2) begin
+                    rx_data[width-counter1+1]<=MOSI;
                     counter1<=counter1+1;
                 end 
                 else rx_valid<=1;
 
             READ_ADD:
-                if(counter1<10) begin
-                    rx_data[9-counter1]<=MOSI;
+                if(counter1<width+2) begin
+                    rx_data[width-counter1+1]<=MOSI;
                     counter1<=counter1+1;
                 end
                 else rx_valid<=1;
 
             READ_DATA:
-                if(counter1<10) begin
-                    rx_data[9-counter1]<=MOSI;
+                if(counter1<width+2) begin
+                    rx_data[width-counter1+1]<=MOSI;
                     counter1<=counter1+1;
                 end
                 else begin
                     rx_valid<=1;
                     if(tx_valid) begin
-                        if(counter2<8) begin
-                            MISO<=tx_data[7-counter2];
+                        if(counter2<width) begin
+                            MISO<=tx_data[width-counter2-1];
                             counter2<=counter2+1;
                         end
                     end
