@@ -1,0 +1,27 @@
+# 1. Load the simulation
+vsim -voptargs=+acc work.SPI_tb
+
+# 2. Open the waveform and memory viewers
+view wave
+view memory 
+
+# 3. Add Testbench signals to the waveform
+add wave -noupdate -group "TB Signals" sim:/SPI_tb/*
+
+# 4. Add internal DUT signals to the waveform
+add wave -noupdate -group "Internal SPI Signals" sim:/SPI_tb/spi/*
+
+# 5. Add RAM internal signals to the waveform
+add wave -noupdate -group "RAM Signals" sim:/SPI_tb/spi/ram/*
+
+# 6. Add Slave internal signals to the waveform
+add wave -noupdate -group "Slave Signals" sim:/SPI_tb/spi/s1/*
+
+# 7. Format the waveform window
+config wave -signalnamewidth 1
+
+# 8. Run the simulation
+run -all
+
+# 9. Zoom the waveform
+wave zoom full
