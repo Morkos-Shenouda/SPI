@@ -2,7 +2,7 @@ module RAM(din,clk,rst,rx_valid,dout,tx_valid);
 input [9:0] din;
 input clk,rst,rx_valid;
 output reg tx_valid;
-output reg [9:0] dout;
+output reg [7:0] dout;
 
 parameter MEM_WIDTH= 8;
 parameter MEM_DEPTH= 256;

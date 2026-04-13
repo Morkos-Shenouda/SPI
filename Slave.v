@@ -25,7 +25,7 @@ integer counter1;
 integer counter2;
 reg has_read_address;
 
-always @(posedge clk or negedge rst_n) begin
+always @(posedge clk ) begin
     if(!rst_n) begin
         cs<=0;
         has_read_address<=0;
@@ -68,7 +68,7 @@ always @(*) begin
     endcase
 end
 
-always @(posedge clk or negedge rst_n) begin
+always @(posedge clk) begin
     if(!rst_n) begin
         MISO<=0;
         rx_data<=0;

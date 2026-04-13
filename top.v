@@ -28,14 +28,14 @@ s1(
     .tx_valid(tx_valid)
 );
 
-ram #(
+RAM #(
     .MEM_WIDTH(MEM_WIDTH),
     .MEM_DEPTH(MEM_DEPTH)
 )
-r1(
+ram(
     .din(rx_data),
     .clk(clk),
-    .rst_n(rst_n),
+    .rst(rst_n),
     .rx_valid(rx_valid),
     .dout(tx_data),
     .tx_valid(tx_valid)

@@ -1,0 +1,35 @@
+module RAM(din,clk,rst,rx_valid,dout,tx_valid);
+input [9:0] din;
+input clk,rst,rx_valid;
+output reg tx_valid;
+output reg [9:0] dout;
+
+parameter MEM_WIDTH= 8;
+parameter MEM_DEPTH= 256;
+
+reg [7:0] WR_ADD,RD_ADD; // Write and Read Address Registers
+
+reg [MEM_WIDTH-1:0] mem_array [0:MEM_DEPTH-1]; // Memory Array
+
+always @(posedge clk) begin
+    if(!rst) begin
+        WR_ADD <= 0;
+        RD_ADD <= 0;
+    end
+    else if(rx_valid)begin
+        if(din[9:8]==2'b00)
+        WR_ADD <= din[7:0]; // Update Write Address
+        else if(din[9:8]==2'b01)
+        mem_array[WR_ADD] <= din[7:0]; // Write Data to Memory
+        else if(din[9:8]==2'b10)
+        RD_ADD <= din[7:0]; // Update Read Address
+        else if(din[9:8]==2'b11)
+        tx_valid <= 1; // Set tx_valid when read command is issued
+        dout <= mem_array[RD_ADD]; // Read Data from Memory
+    end
+    tx_valid <= 0; // Reset tx_valid after one cycle (to avoid latching)
+end
+endmodule
+
+
+    
