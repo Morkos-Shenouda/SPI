@@ -37,23 +37,22 @@ module SPI_tb ();
         // Simulate SPI writing
         @(negedge clk); SS_n = 0; // Assert SS_n to start communication
            //address to be sent is h'02
-        @(negedge clk); MOSI = 0; // Send first bit
-        @(negedge clk); MOSI = 0; // Send second bit
-        @(negedge clk); MOSI = 0; // Send third bit
-        @(negedge clk); MOSI = 0; // Send fourth bit
-        @(negedge clk); MOSI = 0; // Send fifth bit
-        @(negedge clk); MOSI = 0; // Send sixth bit
-        @(negedge clk); MOSI = 0; // Send seventh bit
-        @(negedge clk); MOSI = 0; // Send eighth bit
-        @(negedge clk); MOSI = 1; // Send ninth bit (write command)
-        @(negedge clk); MOSI = 0; // Send tenth bit (write command)
-        
+        MOSI = 0; @(negedge clk);
+        MOSI = 0; @(negedge clk);
+        MOSI = 0; @(negedge clk);
+        MOSI = 0; @(negedge clk);
+        MOSI = 0; @(negedge clk);
+        MOSI = 0; @(negedge clk);
+        MOSI = 0; @(negedge clk);
+        MOSI = 0; @(negedge clk);
+        MOSI = 1; @(negedge clk);
+        MOSI = 1; @(negedge clk);   
+        @(negedge clk);     
 
-        #10; // Wait for a few cycles to ensure the slave processes the command
+        // #10; // Wait for a few cycles to ensure the slave processes the command
 
         @(negedge clk); SS_n = 1; // Deassert SS_n to end communication
 
-        #10; 
 
         //Now we send the data to be written to the register
         @(negedge clk); SS_n = 0; // Assert SS_n to start communication
