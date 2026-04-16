@@ -26,17 +26,18 @@ module SPI_tb ();
     end
 
     initial begin
-       
+       $readmemh("mem.dat", spi.ram.mem_array);
         rst = 0;
         SS_n = 1;
         MOSI = 0;
         r1 = 0;
 
-        #20 rst = 1; // Release reset after 20ns
+        @(negedge clk); rst = 1; // Release reset after 20ns
 
         // Simulate SPI writing
         @(negedge clk); SS_n = 0; // Assert SS_n to start communication
            //address to be sent is h'02
+        repeat (2) @(negedge clk);
         MOSI = 0; @(negedge clk);
         MOSI = 0; @(negedge clk);
         MOSI = 0; @(negedge clk);
@@ -46,17 +47,18 @@ module SPI_tb ();
         MOSI = 0; @(negedge clk);
         MOSI = 0; @(negedge clk);
         MOSI = 1; @(negedge clk);
-        MOSI = 1; @(negedge clk);   
-        @(negedge clk);     
+        MOSI = 0; @(negedge clk); 
+          
 
         // #10; // Wait for a few cycles to ensure the slave processes the command
 
         @(negedge clk); SS_n = 1; // Deassert SS_n to end communication
-
+        MOSI = 0;   // reset MOSI  
 
         //Now we send the data to be written to the register
         @(negedge clk); SS_n = 0; // Assert SS_n to start communication
         //data to be written is h'A9
+        @(negedge clk);
         @(negedge clk); MOSI =0 ; // Send tenth bit (write command)
         @(negedge clk); MOSI =1 ; // Send ninth bit
         @(negedge clk); MOSI =1 ; // Send 8th bit
@@ -69,7 +71,7 @@ module SPI_tb ();
         @(negedge clk); MOSI = 1; // Send 1st bit
         #10; // Wait for a few cycles to ensure the slave processes the command
         @(negedge clk); SS_n = 1; // Deassert SS_n to end communication
-
+        MOSI = 0; // reset MOPSI
        
         #10;
 
@@ -77,6 +79,7 @@ module SPI_tb ();
 
         @(negedge clk); SS_n = 0; // Assert SS_n to start communication
         //address to be read is h'02
+        @(negedge clk); MOSI = 1;
         @(negedge clk); MOSI = 1; // Send first bit
         @(negedge clk); MOSI = 0; // Send second bit
         @(negedge clk); MOSI = 0; // Send third bit
@@ -89,12 +92,13 @@ module SPI_tb ();
         @(negedge clk); MOSI = 0; // Send tenth bit (read command)
         #10; // Wait for a few cycles to ensure the slave processes the command
         @(negedge clk); SS_n = 1; // Deassert SS_n to end communication
-        
+        MOSI = 0;// reset MOSI
         #10;
 
         // now we check the value of MISO to see if the correct data is being read from the register
         @(negedge clk); SS_n = 0; // Assert SS_n to start communication
         //address to be read is h'02
+        @(negedge clk); MOSI = 1;
         @(negedge clk); MOSI = 1; // Send first bit
         @(negedge clk); MOSI = 1; // Send second bit
         @(negedge clk); MOSI = 0; // Send third bit
@@ -105,10 +109,10 @@ module SPI_tb ();
         @(negedge clk); MOSI = 0; // Send eighth bit
         @(negedge clk); MOSI = 0; // Send ninth bit (read command)
         @(negedge clk); MOSI = 0; // Send tenth bit (read command)
-        #15; // Wait for a few cycles to ensure the slave processes the command
-
+        // #15; // Wait for a few cycles to ensure the slave processes the command
+        repeat (3) @(negedge clk);
         for (i = 7; i >= 0; i = i - 1) begin
-            @(posedge clk); r1[i] = MISO; // FIX 6: Sample MISO on the positive edge of the clock to ensure proper timing
+            @(negedge clk); r1[i] = MISO; // FIX 6: Sample MISO on the positive edge of the clock to ensure proper timing
         end
         
         if(r1[7:0] === 8'hA9) begin

@@ -20,6 +20,7 @@ localparam WRITE=2;
 localparam READ_ADD=3;
 localparam READ_DATA=4;
 
+(* fsm_encoding = "sequential" *)
 reg [2:0] cs,ns;
 integer counter1;
 integer counter2;

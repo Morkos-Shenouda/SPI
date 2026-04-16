@@ -17,6 +17,9 @@ always @(posedge clk) begin
         RD_ADD <= 0;
     end
     else if(rx_valid)begin
+        if (tx_valid && din[9:8]!=2'b11) // reset tx_valid from previous write operation
+            tx_valid <= 0;
+
         if(din[9:8]==2'b00)
         WR_ADD <= din[7:0]; // Update Write Address
         else if(din[9:8]==2'b01)
@@ -27,7 +30,7 @@ always @(posedge clk) begin
         tx_valid <= 1; // Set tx_valid when read command is issued
         dout <= mem_array[RD_ADD]; // Read Data from Memory
     end
-    tx_valid <= 0; // Reset tx_valid after one cycle (to avoid latching)
+        // tx_valid <= 0; // Reset tx_valid after one cycle (to avoid latching)
 end
 endmodule
 

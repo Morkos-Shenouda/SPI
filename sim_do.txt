@@ -1,3 +1,6 @@
+vlib work
+vlog Slave.v RAM.v top.v spi_tb.v
+
 # 1. Load the simulation
 vsim -voptargs=+acc work.SPI_tb
 
